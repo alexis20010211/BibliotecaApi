@@ -1,40 +1,91 @@
 package com.biblioteca.bibliotecaApi.service.impl;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
 import com.biblioteca.bibliotecaApi.dto.LibroDto;
-import com.biblioteca.bibliotecaApi.exceptions.ResourceNotFoundException;
 import com.biblioteca.bibliotecaApi.model.Libro;
 import com.biblioteca.bibliotecaApi.repository.LibroRepository;
 import com.biblioteca.bibliotecaApi.service.LibroService;
-import org.springframework.stereotype.Service;
-import java.util.List;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class LibroServiceImpl implements LibroService {
 
-    private final LibroRepository repo;
-    public LibroServiceImpl(LibroRepository repo){ this.repo = repo; }
+    private final @NonNull LibroRepository libroRepository;
 
-    private static LibroDto toDto(Libro l){
-        LibroDto d = new LibroDto();
-        d.setId(l.getId()); d.setTitulo(l.getTitulo()); d.setAutor(l.getAutor());
-        d.setStock(l.getStock()); d.setDisponible(l.getDisponible());
-        return d;
+    private @NonNull LibroDto mapToDto(@NonNull Libro libro) {
+        return new LibroDto(
+                libro.getId(),
+                libro.getTitulo(),
+                libro.getAutor(),
+                libro.getStock(),
+                libro.getDisponible()
+        );
     }
 
-    private static Libro toEntity(LibroDto d){
-        Libro l = new Libro();
-        l.setTitulo(d.getTitulo()); l.setAutor(d.getAutor());
-        l.setStock(d.getStock() == null ? 1 : d.getStock()); l.setDisponible(d.getDisponible() == null ? true : d.getDisponible());
-        return l;
+    private @NonNull Libro mapToEntity(@NonNull LibroDto dto) {
+        Libro libro = new Libro();
+        libro.setId(dto.getId());
+        libro.setTitulo(dto.getTitulo());
+        libro.setAutor(dto.getAutor());
+        libro.setStock(dto.getStock());
+        libro.setDisponible(dto.getDisponible());
+        return libro;
     }
 
-    @Override public List<LibroDto> listar(){ return repo.findAll().stream().map(LibroServiceImpl::toDto).toList(); }
-    @Override public LibroDto obtener(Long id){ return repo.findById(id).map(LibroServiceImpl::toDto).orElseThrow(() -> new ResourceNotFoundException("Libro no encontrado")); }
-    @Override public LibroDto crear(LibroDto dto){ return toDto(repo.save(toEntity(dto))); }
-    @Override public LibroDto actualizar(Long id, LibroDto dto){
-        Libro l = repo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Libro no encontrado"));
-        l.setTitulo(dto.getTitulo()); l.setAutor(dto.getAutor()); l.setStock(dto.getStock()); l.setDisponible(dto.getDisponible());
-        return toDto(repo.save(l));
+    @Override
+    public @NonNull List<LibroDto> listar() {
+        return libroRepository.findAll()
+                .stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
     }
-    @Override public void eliminar(Long id){ if(!repo.existsById(id)) throw new ResourceNotFoundException("Libro no encontrado"); repo.deleteById(id); }
+
+    @Override
+    public @NonNull LibroDto obtener(@NonNull Long id) {
+        Libro libro = Objects.requireNonNull(
+                libroRepository.findById(id)
+                        .orElseThrow(() -> new RuntimeException("Libro no encontrado con id: " + id))
+        );
+        return mapToDto(libro);
+    }
+
+    @Override
+    public @NonNull LibroDto crear(@NonNull LibroDto dto) {
+        Libro libro = mapToEntity(dto);
+        Libro guardado = Objects.requireNonNull(libroRepository.save(libro));
+        return mapToDto(guardado);
+    }
+
+    @Override
+    public @NonNull LibroDto actualizar(@NonNull Long id, @NonNull LibroDto dto) {
+        Libro libroExistente = Objects.requireNonNull(
+                libroRepository.findById(id)
+                        .orElseThrow(() -> new RuntimeException("Libro no encontrado con id: " + id))
+        );
+
+        libroExistente.setTitulo(dto.getTitulo());
+        libroExistente.setAutor(dto.getAutor());
+        libroExistente.setStock(dto.getStock());
+        libroExistente.setDisponible(dto.getDisponible());
+
+        Libro actualizado = Objects.requireNonNull(libroRepository.save(libroExistente));
+        return mapToDto(actualizado);
+    }
+
+    @Override
+    public void eliminar(@NonNull Long id) {
+        Libro libro = Objects.requireNonNull(
+                libroRepository.findById(id)
+                        .orElseThrow(() -> new RuntimeException("Libro no encontrado con id: " + id))
+        );
+        libroRepository.delete(libro);
+    }
 }

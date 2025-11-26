@@ -1,5 +1,11 @@
 package com.biblioteca.bibliotecaApi.service.impl;
 
+import java.util.HashSet;
+import java.util.List;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.biblioteca.bibliotecaApi.dto.UsuarioDto;
 import com.biblioteca.bibliotecaApi.exceptions.BadRequestException;
 import com.biblioteca.bibliotecaApi.exceptions.ResourceNotFoundException;
@@ -8,11 +14,6 @@ import com.biblioteca.bibliotecaApi.model.Usuario;
 import com.biblioteca.bibliotecaApi.repository.RolRepository;
 import com.biblioteca.bibliotecaApi.repository.UsuarioRepository;
 import com.biblioteca.bibliotecaApi.service.UsuarioService;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
-import java.util.HashSet;
-import java.util.List;
 
 @Service
 public class UsuarioServiceImpl implements UsuarioService {

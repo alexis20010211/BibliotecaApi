@@ -6,9 +6,25 @@ public class LibroDto {
     private String autor;
     private Integer stock;
     private Boolean disponible;
-    public Long getId(){return id;} public void setId(Long id){this.id=id;}
-    public String getTitulo(){return titulo;} public void setTitulo(String t){this.titulo=t;}
-    public String getAutor(){return autor;} public void setAutor(String a){this.autor=a;}
-    public Integer getStock(){return stock;} public void setStock(Integer s){this.stock=s;}
-    public Boolean getDisponible(){return disponible;} public void setDisponible(Boolean d){this.disponible=d;}
+
+    public LibroDto() {}
+
+    public LibroDto(Long id, String titulo, String autor, Integer stock, Boolean disponible) {
+        this.id = id;
+        this.titulo = titulo;
+        this.autor = autor;
+        this.stock = stock;
+        this.disponible = disponible;
+    }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getTitulo() { return titulo; }
+    public void setTitulo(String titulo) { this.titulo = titulo; }
+    public String getAutor() { return autor; }
+    public void setAutor(String autor) { this.autor = autor; }
+    public Integer getStock() { return stock; }
+    public void setStock(Integer stock) { this.stock = stock; }
+    public Boolean getDisponible() { return disponible; }
+    public void setDisponible(Boolean disponible) { this.disponible = disponible; }
 }
