@@ -1,12 +1,10 @@
 package com.biblioteca.bibliotecaApi.service.impl;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.biblioteca.bibliotecaApi.dto.PrestamoDto;
-import com.biblioteca.bibliotecaApi.exceptions.BadRequestException;
 import com.biblioteca.bibliotecaApi.exceptions.ResourceNotFoundException;
 import com.biblioteca.bibliotecaApi.model.Libro;
 import com.biblioteca.bibliotecaApi.model.Prestamo;
@@ -16,85 +14,69 @@ import com.biblioteca.bibliotecaApi.repository.PrestamoRepository;
 import com.biblioteca.bibliotecaApi.repository.UsuarioRepository;
 import com.biblioteca.bibliotecaApi.service.PrestamoService;
 
-import lombok.NonNull;
-
 @Service
 public class PrestamoServiceImpl implements PrestamoService {
 
-    private final PrestamoRepository prestamoRepo;
-    private final UsuarioRepository usuarioRepo;
-    private final LibroRepository libroRepo;
+    private final PrestamoRepository prestamoRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final LibroRepository libroRepository;
 
-    public PrestamoServiceImpl(PrestamoRepository prestamoRepo,
-                               UsuarioRepository usuarioRepo,
-                               LibroRepository libroRepo) {
-        this.prestamoRepo = prestamoRepo;
-        this.usuarioRepo = usuarioRepo;
-        this.libroRepo = libroRepo;
-    }
-
-    private static PrestamoDto toDto(@NonNull Prestamo p) {
-        PrestamoDto d = new PrestamoDto();
-        d.setId(p.getId());
-        d.setUsuarioId(p.getUsuario() != null ? p.getUsuario().getId() : null);
-        d.setLibroId(p.getLibro() != null ? p.getLibro().getId() : null);
-        d.setFechaPrestamo(p.getFechaPrestamo());
-        d.setFechaDevolucion(p.getFechaDevolucion());
-        d.setDevuelto(p.getDevuelto());
-        return d;
+    public PrestamoServiceImpl(PrestamoRepository prestamoRepository,
+                               UsuarioRepository usuarioRepository,
+                               LibroRepository libroRepository) {
+        this.prestamoRepository = prestamoRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.libroRepository = libroRepository;
     }
 
     @Override
-    public PrestamoDto registrar(@NonNull PrestamoDto dto) {
-        @NonNull Usuario u = usuarioRepo.findById(dto.getUsuarioId())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+    public Prestamo registrarPrestamo(Long usuarioId, Long libroId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + usuarioId));
 
-        @NonNull Libro l = libroRepo.findById(dto.getLibroId())
-                .orElseThrow(() -> new ResourceNotFoundException("Libro no encontrado"));
+        Libro libro = libroRepository.findById(libroId)
+                .orElseThrow(() -> new ResourceNotFoundException("Libro no encontrado con id: " + libroId));
 
-        if (l.getStock() == null || l.getStock() <= 0) {
-            throw new BadRequestException("No hay stock disponible");
+        // Validar si el libro ya está prestado
+        boolean prestado = prestamoRepository.existsByLibroIdAndFechaDevolucionIsNull(libroId);
+        if (prestado) {
+            throw new IllegalStateException("El libro ya se encuentra prestado.");
         }
 
-        l.setStock(l.getStock() - 1);
-        if (l.getStock() == 0) l.setDisponible(false);
-        libroRepo.save(l);
+        Prestamo prestamo = new Prestamo();
+        prestamo.setUsuario(usuario);
+        prestamo.setLibro(libro);
+        prestamo.setFechaPrestamo(LocalDate.now());
+        prestamo.setDevuelto(false);
 
-        Prestamo p = new Prestamo();
-        p.setUsuario(u);
-        p.setLibro(l);
-        p.setFechaPrestamo(LocalDateTime.now());
-        p.setDevuelto(false);
-
-        Prestamo saved = prestamoRepo.save(p);
-        return toDto(saved);
+        return prestamoRepository.save(prestamo);
     }
 
     @Override
-    public PrestamoDto devolver(@NonNull Long id) {
-        Prestamo p = prestamoRepo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Prestamo no encontrado"));
+    public Prestamo registrarDevolucion(Long prestamoId) {
+        Prestamo prestamo = prestamoRepository.findById(prestamoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Prestamo no encontrado con id: " + prestamoId));
 
-        if (p.getDevuelto()) {
-            throw new BadRequestException("Prestamo ya devuelto");
-        }
+        prestamo.setDevuelto(true);
+        prestamo.setFechaDevolucion(LocalDate.now());
 
-        p.setDevuelto(true);
-        p.setFechaDevolucion(LocalDateTime.now());
-
-        Libro l = p.getLibro();
-        l.setStock(l.getStock() + 1);
-        l.setDisponible(true);
-        libroRepo.save(l);
-
-        return toDto(prestamoRepo.save(p));
+        return prestamoRepository.save(prestamo);
     }
 
     @Override
-    public List<PrestamoDto> historialPorUsuario(@NonNull Long usuarioId) {
-        return prestamoRepo.findByUsuarioId(usuarioId)
-                .stream()
-                .map(PrestamoServiceImpl::toDto)
-                .toList();
+    public Prestamo obtener(Long id) {
+        return prestamoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Prestamo no encontrado con id: " + id));
+    }
+
+    @Override
+    public List<Prestamo> listar() {
+        return prestamoRepository.findAll();
+    }
+
+    @Override
+    public List<Prestamo> listarPorUsuario(Long usuarioId) {
+        // Usamos el método directo del repositorio
+        return prestamoRepository.findByUsuarioId(usuarioId);
     }
 }

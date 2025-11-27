@@ -1,36 +1,39 @@
 package com.biblioteca.bibliotecaApi.security;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import com.biblioteca.bibliotecaApi.model.Usuario;
 
 public class CustomUserDetails implements UserDetails {
 
-    private final String username;
-    private final String password;
-    private final Collection<? extends GrantedAuthority> authorities;
+    private final Usuario usuario;
 
-    public CustomUserDetails(String username, String password,
-                             Collection<? extends GrantedAuthority> authorities) {
-        this.username = username;
-        this.password = password;
-        this.authorities = authorities;
+    public CustomUserDetails(Usuario usuario) {
+        this.usuario = usuario;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return authorities;
+        return usuario.getRoles()
+                .stream()
+                .map(rol -> new SimpleGrantedAuthority("ROLE_" + rol.getNombre()))
+                .collect(Collectors.toList());
     }
 
     @Override
     public String getPassword() {
-        return password;
+        return usuario.getPassword();
     }
 
     @Override
     public String getUsername() {
-        return username;
+        return usuario.getUsername(); 
+        // puedes cambiar a usuario.getEmail() si prefieres login por email
     }
 
     @Override
@@ -50,6 +53,11 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        // Si tu entidad tiene boolean activo
+        return usuario.isActivo();
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
     }
 }

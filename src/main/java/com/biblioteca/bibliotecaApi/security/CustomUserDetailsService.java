@@ -1,27 +1,32 @@
 package com.biblioteca.bibliotecaApi.security;
 
-import java.util.Collections;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import com.biblioteca.bibliotecaApi.model.Usuario;
+import com.biblioteca.bibliotecaApi.repository.UsuarioRepository;
+
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
+    private final UsuarioRepository usuarioRepository;
+
+    @Autowired
+    public CustomUserDetailsService(UsuarioRepository usuarioRepository) {
+        this.usuarioRepository = usuarioRepository;
+    }
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // Aquí normalmente iría la consulta a la base de datos.
-        // Para prueba, devolvemos un usuario fijo.
-        if ("admin".equals(username)) {
-            return new CustomUserDetails(
-                    "admin",
-                    "{noop}admin123", // {noop} indica que la contraseña no está codificada
-                    Collections.emptyList()
-            );
-        } else {
-            throw new UsernameNotFoundException("Usuario no encontrado: " + username);
-        }
+
+        Usuario usuario = usuarioRepository.findByUsername(username)
+                .orElseThrow(() -> 
+                    new UsernameNotFoundException("Usuario no encontrado: " + username)
+                );
+
+        return new CustomUserDetails(usuario);
     }
 }

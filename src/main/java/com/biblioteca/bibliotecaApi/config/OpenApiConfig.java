@@ -9,11 +9,8 @@ import io.swagger.v3.oas.models.info.Info;
 @Configuration
 public class OpenApiConfig {
     @Bean
-    public OpenAPI apiInfo() {
-        return new OpenAPI()
-                .info(new Info()
-                        .title("Biblioteca API")
-                        .version("1.0")
-                        .description("API para gestión de biblioteca universitaria"));
+    public OpenAPI api() {
+        return new OpenAPI().info(new Info().title("Biblioteca API").version("1.0")
+                .description("API REST para gestión de biblioteca - autenticación JWT y roles"));
     }
 }

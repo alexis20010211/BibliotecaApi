@@ -2,35 +2,57 @@ package com.biblioteca.bibliotecaApi.controller;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.biblioteca.bibliotecaApi.dto.PrestamoDto;
+import com.biblioteca.bibliotecaApi.model.Prestamo;
 import com.biblioteca.bibliotecaApi.service.PrestamoService;
 
 @RestController
-@RequestMapping("/prestamos")
+@RequestMapping("/api/prestamos")
 public class PrestamoController {
 
-    private final PrestamoService service;
-    public PrestamoController(PrestamoService service){ this.service = service; }
+    private final PrestamoService prestamoService;
 
-    @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<PrestamoDto> registrar(@RequestBody PrestamoDto dto){ return ResponseEntity.ok(service.registrar(dto)); }
+    @Autowired
+    public PrestamoController(PrestamoService prestamoService) {
+        this.prestamoService = prestamoService;
+    }
 
-    @PutMapping("/{id}/devolver")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<PrestamoDto> devolver(@PathVariable Long id){ return ResponseEntity.ok(service.devolver(id)); }
+    @PostMapping("/registrar")
+    public ResponseEntity<Prestamo> registrarPrestamo(@RequestParam Long usuarioId,
+                                                      @RequestParam Long libroId) {
+        Prestamo prestamo = prestamoService.registrarPrestamo(usuarioId, libroId);
+        return ResponseEntity.ok(prestamo);
+    }
+
+    @PostMapping("/devolver/{prestamoId}")
+    public ResponseEntity<Prestamo> registrarDevolucion(@PathVariable Long prestamoId) {
+        Prestamo prestamo = prestamoService.registrarDevolucion(prestamoId);
+        return ResponseEntity.ok(prestamo);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Prestamo> obtener(@PathVariable Long id) {
+        Prestamo prestamo = prestamoService.obtener(id);
+        return ResponseEntity.ok(prestamo);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Prestamo>> listar() {
+        List<Prestamo> prestamos = prestamoService.listar();
+        return ResponseEntity.ok(prestamos);
+    }
 
     @GetMapping("/usuario/{usuarioId}")
-    @PreAuthorize("hasAnyRole('ADMIN','USUARIO')")
-    public ResponseEntity<List<PrestamoDto>> historial(@PathVariable Long usuarioId){ return ResponseEntity.ok(service.historialPorUsuario(usuarioId)); }
+    public ResponseEntity<List<Prestamo>> listarPorUsuario(@PathVariable Long usuarioId) {
+        List<Prestamo> prestamos = prestamoService.listarPorUsuario(usuarioId);
+        return ResponseEntity.ok(prestamos);
+    }
 }
