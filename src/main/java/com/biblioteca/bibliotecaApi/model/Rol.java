@@ -3,6 +3,8 @@ package com.biblioteca.bibliotecaApi.model;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -25,6 +27,7 @@ public class Rol {
     // --- RELACIÓN ---
     // Un rol puede estar asociado a muchos usuarios
     @ManyToMany(mappedBy = "roles")
+    @JsonIgnore  // <--- evita recursión infinita
     private Set<Usuario> usuarios = new HashSet<>();
 
     // --- CONSTRUCTORES ---

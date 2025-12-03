@@ -4,20 +4,18 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
-import com.biblioteca.bibliotecaApi.model.Usuario;
+import com.biblioteca.bibliotecaApi.dto.UsuarioDto;
 import com.biblioteca.bibliotecaApi.service.UsuarioService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/usuarios")
+@Validated
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
@@ -27,30 +25,40 @@ public class UsuarioController {
         this.usuarioService = usuarioService;
     }
 
+    // Solo ADMIN puede crear usuarios (alternativa: usar AuthController)
+    @PreAuthorize("hasRol('ADMIN')")
     @PostMapping
-    public ResponseEntity<Usuario> registrar(@RequestBody Usuario usuario) {
-        Usuario creado = usuarioService.registrar(usuario);
+    public ResponseEntity<UsuarioDto> registrar(@Valid @RequestBody UsuarioDto usuarioDto) {
+        UsuarioDto creado = usuarioService.registrar(usuarioDto);
         return ResponseEntity.ok(creado);
     }
 
+    // Solo ADMIN puede ver usuarios
+    @PreAuthorize("hasRol('ADMIN')")
     @GetMapping("/{id}")
-    public ResponseEntity<Usuario> obtenerPorId(@PathVariable Long id) {
-        Usuario usuario = usuarioService.obtenerPorId(id);
+    public ResponseEntity<UsuarioDto> obtenerPorId(@PathVariable Long id) {
+        UsuarioDto usuario = usuarioService.obtenerPorId(id);
         return ResponseEntity.ok(usuario);
     }
 
+    // Solo ADMIN puede consultar por email
+    @PreAuthorize("hasRol('ADMIN')")
     @GetMapping("/email")
-    public ResponseEntity<Usuario> obtenerPorEmail(@RequestParam String email) {
-        Usuario usuario = usuarioService.obtenerPorEmail(email);
+    public ResponseEntity<UsuarioDto> obtenerPorEmail(@RequestParam String email) {
+        UsuarioDto usuario = usuarioService.obtenerPorEmail(email);
         return ResponseEntity.ok(usuario);
     }
 
+    // Solo ADMIN puede listar usuarios
+    @PreAuthorize("hasRol('ADMIN')")
     @GetMapping
-    public ResponseEntity<List<Usuario>> listar() {
-        List<Usuario> usuarios = usuarioService.listar();
+    public ResponseEntity<List<UsuarioDto>> listar() {
+        List<UsuarioDto> usuarios = usuarioService.listar();
         return ResponseEntity.ok(usuarios);
     }
 
+    // Solo ADMIN puede eliminar usuarios
+    @PreAuthorize("hasRol('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         usuarioService.eliminar(id);

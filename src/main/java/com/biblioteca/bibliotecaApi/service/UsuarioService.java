@@ -2,17 +2,22 @@ package com.biblioteca.bibliotecaApi.service;
 
 import java.util.List;
 
-import com.biblioteca.bibliotecaApi.model.Usuario;
+import com.biblioteca.bibliotecaApi.dto.UsuarioDto;
 
 public interface UsuarioService {
 
-    Usuario registrar(Usuario usuario);
+    // Registra un nuevo usuario
+    UsuarioDto registrar(UsuarioDto usuarioDto);
 
-    Usuario obtenerPorId(Long id);
+    // Busca un usuario por ID
+    UsuarioDto obtenerPorId(Long id);
 
-    Usuario obtenerPorEmail(String email);
+    // Busca un usuario por email
+    UsuarioDto obtenerPorEmail(String email);
 
-    List<Usuario> listar();
+    // Lista todos los usuarios
+    List<UsuarioDto> listar();
 
+    // Elimina un usuario por ID
     void eliminar(Long id);
 }

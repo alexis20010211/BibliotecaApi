@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -35,16 +37,12 @@ public class Usuario {
     @Column(nullable=false)
     private String email;
 
-    // ------------------------------------
-    // NUEVO CAMPO PARA EL ESTADO DEL USUARIO
-    // ------------------------------------
     @Column(nullable = false)
     private boolean activo = true;
 
-    // ==========================
-    //      RELACIONES
-    // ==========================
-
+   
+    //  ROLES
+   
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "usuarios_roles",
@@ -53,13 +51,13 @@ public class Usuario {
     )
     private Set<Rol> roles = new HashSet<>();
 
+    //  LIBROS
+   
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Libro> libros = new ArrayList<>();
 
-    // ==========================
-    //   CONSTRUCTORES
-    // ==========================
-
+    // ===== CONSTRUCTORES =====
     public Usuario() {}
 
     public Usuario(String username, String password, String email) {
@@ -75,9 +73,7 @@ public class Usuario {
         this.email = email;
     }
 
-    // ==========================
-    //     GETTERS & SETTERS
-    // ==========================
+    // ===== GETTERS & SETTERS =====
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -100,10 +96,7 @@ public class Usuario {
     public List<Libro> getLibros() { return libros; }
     public void setLibros(List<Libro> libros) { this.libros = libros; }
 
-    // ==========================
-    //   MÉTODOS DE UTILIDAD
-    // ==========================
-
+    // ===== MÉTODOS UTILIDAD =====
     public void addRol(Rol rol) {
         this.roles.add(rol);
         rol.getUsuarios().add(this);

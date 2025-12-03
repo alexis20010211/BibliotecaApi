@@ -60,17 +60,24 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- POSTGRESQL (solo para futuro) -->
+        <!-- POSTGRESQL (opcional, futuro) -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
 
-        <!-- H2 Database (In-Memory) -->
+        <!-- H2 DATABASE (para test o memoria) -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- MYSQL (AGREGADO!) -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
 

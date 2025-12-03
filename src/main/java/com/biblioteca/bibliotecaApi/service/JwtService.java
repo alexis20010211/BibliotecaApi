@@ -26,13 +26,12 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    // Tiempo de expiración en milisegundos (ej: 1 hora)
+
     @Value("${jwt.expiration}")
     private long expirationTime;
 
-    // ============================
     // GENERAR TOKEN
-    // ============================
+
     public String generateToken(CustomUserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("roles", userDetails.getAuthorities());
@@ -46,17 +45,15 @@ public class JwtService {
                 .compact();
     }
 
-    // ============================
+   
     // VALIDAR TOKEN
-    // ============================
     public boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
-    // ============================
     // EXTRAER INFORMACIÓN DEL TOKEN
-    // ============================
+
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -90,9 +87,8 @@ public class JwtService {
         }
     }
 
-    // ============================
+
     // CLAVE DE FIRMA
-    // ============================
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }

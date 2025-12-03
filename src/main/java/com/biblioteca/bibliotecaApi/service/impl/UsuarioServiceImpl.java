@@ -1,12 +1,16 @@
 package com.biblioteca.bibliotecaApi.service.impl;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.biblioteca.bibliotecaApi.exceptions.ResourceNotFoundException;
+import com.biblioteca.bibliotecaApi.dto.UsuarioDto;
+import com.biblioteca.bibliotecaApi.model.Rol;
 import com.biblioteca.bibliotecaApi.model.Usuario;
+import com.biblioteca.bibliotecaApi.repository.RolRepository;
 import com.biblioteca.bibliotecaApi.repository.UsuarioRepository;
 import com.biblioteca.bibliotecaApi.service.UsuarioService;
 
@@ -14,49 +18,76 @@ import com.biblioteca.bibliotecaApi.service.UsuarioService;
 public class UsuarioServiceImpl implements UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final RolRepository rolRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    public UsuarioServiceImpl(UsuarioRepository usuarioRepository) {
+    public UsuarioServiceImpl(
+            UsuarioRepository usuarioRepository,
+            RolRepository rolRepository,
+            PasswordEncoder passwordEncoder
+    ) {
         this.usuarioRepository = usuarioRepository;
+        this.rolRepository = rolRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
-    public Usuario registrar(Usuario usuario) {
-        if (usuarioRepository.existsByUsername(usuario.getUsername())) {
-            throw new IllegalArgumentException("El username ya existe: " + usuario.getUsername());
+    public UsuarioDto registrar(UsuarioDto dto) {
+
+        Usuario usuario = new Usuario();
+        usuario.setUsername(dto.getUsername());
+        usuario.setEmail(dto.getEmail());
+        usuario.setActivo(dto.isActivo());
+        usuario.setPassword(passwordEncoder.encode(dto.getPassword()));
+
+        // ============================
+        // Asignación de roles
+        // ============================
+        if (dto.getRoles() != null && !dto.getRoles().isEmpty()) {
+
+            Set<Rol> roles = dto.getRoles().stream()
+                    .map(nombreRol -> rolRepository.findByNombre(nombreRol)
+                            .orElseThrow(() ->
+                                    new RuntimeException("El rol " + nombreRol + " no existe")))
+                    .collect(Collectors.toSet());
+
+            usuario.setRoles(roles);
+
+        } else {
+            // Rol por defecto
+            Rol defaultRol = rolRepository.findByNombre("ROLE_USER")
+                    .orElseThrow(() -> new RuntimeException("El rol ROLE_USER no existe"));
+
+            usuario.setRoles(Set.of(defaultRol));
         }
 
-        if (usuarioRepository.existsByEmail(usuario.getEmail())) {
-            throw new IllegalArgumentException("El email ya existe: " + usuario.getEmail());
-        }
-
-        return usuarioRepository.save(usuario);
+        Usuario guardado = usuarioRepository.save(usuario);
+        return UsuarioDto.fromEntity(guardado);
     }
 
     @Override
-    public Usuario obtenerPorId(Long id) {
+    public UsuarioDto obtenerPorId(Long id) {
         return usuarioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + id));
+                .map(UsuarioDto::fromEntity)
+                .orElse(null);
     }
 
     @Override
-    public Usuario obtenerPorEmail(String email) {
-        // Como el repository no tiene findByEmail, usamos listar() y filtramos
+    public UsuarioDto obtenerPorEmail(String email) {
+        return usuarioRepository.findByEmail(email)
+                .map(UsuarioDto::fromEntity)
+                .orElse(null);
+    }
+
+    @Override
+    public List<UsuarioDto> listar() {
         return usuarioRepository.findAll().stream()
-                .filter(u -> u.getEmail().equalsIgnoreCase(email))
-                .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con email: " + email));
-    }
-
-    @Override
-    public List<Usuario> listar() {
-        return usuarioRepository.findAll();
+                .map(UsuarioDto::fromEntity)
+                .collect(Collectors.toList());
     }
 
     @Override
     public void eliminar(Long id) {
-        Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + id));
-        usuarioRepository.delete(usuario);
+        usuarioRepository.deleteById(id);
     }
 }
