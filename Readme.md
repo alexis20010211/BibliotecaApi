@@ -50,3 +50,130 @@ Permite a los usuarios y administradores:
 ```bash
 git clone https://github.com/alexis20010211/BibliotecaApi.git
 cd BibliotecaApi
+
+2. Configurar base de datos en application.properties.
+
+3. Ejecutar la aplicación:
+
+Ejemplos de Uso (Endpoints y JSON)
+1️⃣ Autenticación
+
+Login ADMIN:
+
+POST /auth/login
+Body:
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+
+Login USER:
+
+POST /auth/login
+Body:
+{
+  "username": "user",
+  "password": "user123"
+}
+
+
+Guardar el token JWT para usar en los demás endpoints.
+
+2️⃣ Libros
+
+Crear libro (solo ADMIN)
+
+POST /api/libros
+Headers: Authorization: Bearer <TOKEN_ADMIN>
+Body:
+{
+  "titulo": "Clean Code",
+  "autor": "Robert Martin",
+  "anio": 2008
+}
+
+
+Listar libros (ADMIN y USER)
+
+GET /api/libros
+Headers: Authorization: Bearer <TOKEN_ADMIN o TOKEN_USER>
+
+
+Actualizar libro (solo ADMIN)
+
+PUT /api/libros/{id}
+Headers: Authorization: Bearer <TOKEN_ADMIN>
+Body:
+{
+  "titulo": "Clean Architecture",
+  "autor": "Robert Martin",
+  "anio": 2017
+}
+
+
+Eliminar libro (solo ADMIN)
+
+DELETE /api/libros/{id}
+Headers: Authorization: Bearer <TOKEN_ADMIN>
+
+3️⃣ Usuarios
+
+Listar usuarios (solo ADMIN)
+
+GET /api/usuarios
+Headers: Authorization: Bearer <TOKEN_ADMIN>
+
+
+Crear usuario (solo ADMIN)
+
+POST /api/usuarios
+Headers: Authorization: Bearer <TOKEN_ADMIN>
+Body:
+{
+  "username": "nuevoUser",
+  "password": "user123",
+  "email": "user@mail.com",
+  "roles": ["USER"]
+}
+
+4️⃣ Préstamos
+
+Registrar préstamo (solo ADMIN)
+
+POST /api/prestamos/registrar?usuarioId=2&libroId=12
+Headers: Authorization: Bearer <TOKEN_ADMIN>
+
+
+Devolver préstamo (solo ADMIN)
+
+POST /api/prestamos/devolver/{prestamoId}
+Headers: Authorization: Bearer <TOKEN_ADMIN>
+
+
+Listar préstamos de un usuario (USER)
+
+GET /api/prestamos/usuario/{usuarioId}
+Headers: Authorization: Bearer <TOKEN_USER>
+
+
+Listar todos los préstamos (ADMIN)
+
+GET /api/prestamos
+Headers: Authorization: Bearer <TOKEN_ADMIN>
+
+
+Ver préstamo específico
+
+GET /api/prestamos/{id}
+Headers: Authorization: Bearer <TOKEN_ADMIN>
+
+5️⃣ Manejo de Errores
+
+Intentar crear libro con token USER → 403 Forbidden
+
+Intentar devolver préstamo ya devuelto → 400 Bad Request
+
+Buscar libro o préstamo inexistente → 404 Not Found
+
+
