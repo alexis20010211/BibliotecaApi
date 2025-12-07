@@ -18,8 +18,10 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter,
-                          AuthenticationProvider authenticationProvider) {
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthFilter,
+            AuthenticationProvider authenticationProvider
+    ) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.authenticationProvider = authenticationProvider;
     }
@@ -28,42 +30,73 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
+            //  Deshabilitar CSRF por usar JWT 
             .csrf(csrf -> csrf.disable())
+
+            //  CORS deshabilitado 
             .cors(cors -> cors.disable())
 
-            // 🔥 AUTORIZACIONES
+            // AUTORIZACIONES
             .authorizeHttpRequests(auth -> auth
+
+                // Endpoints públicos (login / registro / swagger)
                 .requestMatchers(
                     "/auth/login",
                     "/auth/register",
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
-                    "/swagger-ui.html"
+                    "/swagger-ui.html",
+                    "/public/**",
+                    "/error",
+                    "/actuator/health"
                 ).permitAll()
 
-                // 🔥 solo administradores
+                // Rutas solo accesibles por administradores
                 .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                // 🔐 cualquier otro endpoint requiere JWT
+                // Rutas para bibliotecarios
+                .requestMatchers("/staff/**").hasAnyRole("ADMIN", "STAFF")
+
+                // Cualquier otra ruta requiere autenticación con JWT
                 .anyRequest().authenticated()
             )
 
-            // 🚫 No usar sesiones
+            // Manejo de sesiones: stateless (sin sesiones)
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // 🧩 tu autenticador (CustomUserDetails + JWT)
+            // Proveedor de autenticación (UserDetailsService + PasswordEncoder)
             .authenticationProvider(authenticationProvider)
 
-            // 🔥 agregar tu filtro antes del filtro por defecto
+            //  Filtro JWT antes del UsernamePasswordAuthenticationFilter
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 
-            // 🚫 deshabilitar login/formulario básico
+            //  Desactivar login básico y formulario
             .httpBasic(basic -> basic.disable())
-            .formLogin(login -> login.disable())
-            .headers(headers -> headers.frameOptions(frame -> frame.disable()));
+            .formLogin(form -> form.disable())
+
+            //  Dejar usar H2-console y otros iframes
+            .headers(headers -> headers.frameOptions(options -> options.disable()))
+
+            //  Manejo opcional de errores de seguridad
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((req, res, e) -> {
+                    res.setStatus(401);
+                    res.getWriter().write("No autorizado: necesitas un JWT válido.");
+                })
+                .accessDeniedHandler((req, res, e) -> {
+                    res.setStatus(403);
+                    res.getWriter().write("Acceso denegado: no tienes permisos suficientes.");
+                })
+            );
 
         return http.build();
+    }
+
+    // PasswordEncoder para encriptar contraseñas
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }
