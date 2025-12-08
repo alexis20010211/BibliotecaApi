@@ -31,39 +31,43 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.disable())
 
-            // 🔥 AUTORIZACIONES
+            // AUTORIZACIONES
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/auth/login",
-                    "/auth/register",
-                    "/swagger-ui/**",
-                    "/v3/api-docs/**",
-                    "/swagger-ui.html"
+                    "/auth/register"
                 ).permitAll()
 
-                // 🔥 solo administradores
-                .requestMatchers("/admin/**").hasRole("ADMIN")
+                // solo administradores
+                .requestMatchers("/admin/").hasRole("ADMIN")
 
-                // 🔐 cualquier otro endpoint requiere JWT
+                // cualquier otro endpoint requiere JWT
                 .anyRequest().authenticated()
             )
 
-            // 🚫 No usar sesiones
+            // No usar sesiones
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // 🧩 tu autenticador (CustomUserDetails + JWT)
+            // tu autenticador (CustomUserDetails + JWT)
             .authenticationProvider(authenticationProvider)
 
-            // 🔥 agregar tu filtro antes del filtro por defecto
+            // agregar tu filtro antes del filtro por defecto
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 
-            // 🚫 deshabilitar login/formulario básico
+            // deshabilitar login/formulario básico
             .httpBasic(basic -> basic.disable())
             .formLogin(login -> login.disable())
             .headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
         return http.build();
+    }
+
+
+    // necesario para registrar usuarios y en DataLoader
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }
